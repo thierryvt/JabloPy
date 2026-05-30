@@ -11,6 +11,7 @@ if __package__ in {None, ""}:
 
 from jablopy.client import JablotronClient
 from jablopy.models import (
+    ConnectionEvent,
     FlagEvent,
     HeartbeatEvent,
     JablotronEvent,
@@ -95,6 +96,10 @@ def build_cli_command(line: str, pin: str | None) -> CliCommand | None:
 
 
 def format_event(event: JablotronEvent) -> str:
+    if isinstance(event, ConnectionEvent):
+        state = "connected" if event.connected else "disconnected"
+        return f"[connection] {state}"
+
     if isinstance(event, HeartbeatEvent):
         return f"[heartbeat] {event.received_at.isoformat()}"
 

@@ -16,13 +16,29 @@ class JablotronState:
     def section_state(self) -> str | None:
         return self.sections.get(1)
 
+    def get_section_state(self, section: int) -> str | None:
+        return self.sections.get(section)
+
     def is_flag_active(self, flag: str, section: int) -> bool:
         return section in self.flags.get(flag, set())
+
+    def active_flags_for_section(self, section: int) -> frozenset[str]:
+        return frozenset(
+            flag for flag, sections in self.flags.items() if section in sections
+        )
+
+    def active_devices(self) -> frozenset[int]:
+        return frozenset(device for device, active in self.sensors.items() if active)
 
 
 @dataclass(frozen=True)
 class JablotronEvent:
     raw: str
+
+
+@dataclass(frozen=True)
+class ConnectionEvent(JablotronEvent):
+    connected: bool
 
 
 @dataclass(frozen=True)

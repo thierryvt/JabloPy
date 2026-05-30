@@ -1,7 +1,36 @@
 from __future__ import annotations
 
 from .client import JablotronClient
+from .constants import (
+    COMMAND_FLAGS,
+    COMMAND_HELP,
+    COMMAND_PRFSTATE,
+    COMMAND_SET,
+    COMMAND_SETP,
+    COMMAND_STATE,
+    COMMAND_UNSET,
+    COMMAND_VER,
+    CONTROL_COMMANDS,
+    FLAGS,
+    FLAG_ENTRY,
+    FLAG_EXIT,
+    FLAG_EXTERNAL_WARNING,
+    FLAG_FIRE_ALARM,
+    FLAG_INTERNAL_WARNING,
+    FLAG_INTRUDER_ALARM,
+    FLAG_PANIC_ALARM,
+    QUERY_COMMANDS,
+    SECTION_ARMED,
+    SECTION_ARMED_PART,
+    SECTION_BLOCKED,
+    SECTION_MAINTENANCE,
+    SECTION_OFF,
+    SECTION_READY,
+    SECTION_SERVICE,
+    SECTION_STATES,
+)
 from .models import (
+    ConnectionEvent,
     FlagEvent,
     HeartbeatEvent,
     JablotronEvent,
@@ -10,11 +39,38 @@ from .models import (
     SectionStateEvent,
     UnknownLineEvent,
 )
-from .protocol import CONTROL_COMMANDS, QUERY_COMMANDS, JablotronProtocol
+from .protocol import JablotronProtocol
+
+__version__ = "0.1.0"
 
 __all__ = [
+    "COMMAND_FLAGS",
+    "COMMAND_HELP",
+    "COMMAND_PRFSTATE",
+    "COMMAND_SET",
+    "COMMAND_SETP",
+    "COMMAND_STATE",
+    "COMMAND_UNSET",
+    "COMMAND_VER",
     "CONTROL_COMMANDS",
+    "FLAGS",
+    "FLAG_ENTRY",
+    "FLAG_EXIT",
+    "FLAG_EXTERNAL_WARNING",
+    "FLAG_FIRE_ALARM",
+    "FLAG_INTERNAL_WARNING",
+    "FLAG_INTRUDER_ALARM",
+    "FLAG_PANIC_ALARM",
     "QUERY_COMMANDS",
+    "SECTION_ARMED",
+    "SECTION_ARMED_PART",
+    "SECTION_BLOCKED",
+    "SECTION_MAINTENANCE",
+    "SECTION_OFF",
+    "SECTION_READY",
+    "SECTION_SERVICE",
+    "SECTION_STATES",
+    "ConnectionEvent",
     "FlagEvent",
     "HeartbeatEvent",
     "JablotronClient",
@@ -24,4 +80,5 @@ __all__ = [
     "PrfStateEvent",
     "SectionStateEvent",
     "UnknownLineEvent",
+    "__version__",
 ]

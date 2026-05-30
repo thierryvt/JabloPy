@@ -5,7 +5,7 @@ import logging
 from contextlib import suppress
 from typing import Callable, Iterable
 
-from .models import JablotronEvent, JablotronState
+from .models import ConnectionEvent, JablotronEvent, JablotronState
 from .protocol import JablotronProtocol
 
 
@@ -127,14 +127,14 @@ class JablotronClient:
             self._port,
         )
 
-        self._protocol.state.connected = True
+        self._set_connected(True)
 
     async def _close_connection(self) -> None:
         writer = self._writer
 
         self._reader = None
         self._writer = None
-        self._protocol.state.connected = False
+        self._set_connected(False)
 
         if writer:
             writer.close()
@@ -175,3 +175,11 @@ class JablotronClient:
                 listener(event)
             except Exception:
                 _LOGGER.exception("Jablotron listener failed")
+
+    def _set_connected(self, connected: bool) -> None:
+        if self._protocol.state.connected == connected:
+            return
+
+        self._protocol.state.connected = connected
+        raw = "CONNECTED" if connected else "DISCONNECTED"
+        self._notify(ConnectionEvent(raw=raw, connected=connected))

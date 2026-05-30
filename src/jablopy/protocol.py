@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import Iterable
 
+from .constants import CONTROL_COMMANDS, QUERY_COMMANDS
 from .models import (
     FlagEvent,
     HeartbeatEvent,
@@ -12,10 +13,6 @@ from .models import (
     SectionStateEvent,
     UnknownLineEvent,
 )
-
-
-CONTROL_COMMANDS = {"SET", "SETP", "UNSET"}
-QUERY_COMMANDS = {"VER", "HELP", "STATE", "FLAGS", "PRFSTATE"}
 
 
 class JablotronProtocol:
