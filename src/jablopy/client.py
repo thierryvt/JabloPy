@@ -55,6 +55,20 @@ class JablotronClient:
         self._running = True
         self._task = asyncio.create_task(self._reader_loop())
 
+    async def wait_until_connected(self, timeout: float | None = None) -> None:
+        async def wait_loop() -> None:
+            while not self.connected:
+                await asyncio.sleep(0.1)
+
+        if self.connected:
+            return
+
+        if timeout is None:
+            await wait_loop()
+            return
+
+        await asyncio.wait_for(wait_loop(), timeout=timeout)
+
     async def stop(self) -> None:
         self._running = False
 

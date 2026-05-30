@@ -5,6 +5,7 @@ from typing import Iterable
 
 from .constants import CONTROL_COMMANDS, QUERY_COMMANDS
 from .models import (
+    CommandErrorEvent,
     FlagEvent,
     HeartbeatEvent,
     JablotronEvent,
@@ -127,6 +128,9 @@ class JablotronProtocol:
             self._state.last_heartbeat = received_at
             return HeartbeatEvent(raw=line, received_at=received_at)
 
+        if line == "ERROR" or line.startswith("ERROR:"):
+            return self._parse_error(line)
+
         if line.startswith("STATE "):
             return self._parse_state(line)
 
@@ -134,6 +138,24 @@ class JablotronProtocol:
             return self._parse_prfstate(line)
 
         return self._parse_flag(line)
+
+    def _parse_error(self, line: str) -> CommandErrorEvent:
+        if line == "ERROR":
+            return CommandErrorEvent(raw=line)
+
+        details = line.removeprefix("ERROR:").strip()
+        code_text, separator, message = details.partition(" ")
+
+        try:
+            code = int(code_text)
+        except ValueError:
+            return CommandErrorEvent(raw=line, message=details or None)
+
+        return CommandErrorEvent(
+            raw=line,
+            code=code,
+            message=message.strip() if separator else None,
+        )
 
     def _parse_state(self, line: str) -> JablotronEvent:
         parts = line.split()

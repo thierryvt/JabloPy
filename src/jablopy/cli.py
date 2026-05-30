@@ -11,6 +11,7 @@ if __package__ in {None, ""}:
 
 from jablopy.client import JablotronClient
 from jablopy.models import (
+    CommandErrorEvent,
     ConnectionEvent,
     FlagEvent,
     HeartbeatEvent,
@@ -100,6 +101,11 @@ def format_event(event: JablotronEvent) -> str:
         state = "connected" if event.connected else "disconnected"
         return f"[connection] {state}"
 
+    if isinstance(event, CommandErrorEvent):
+        code = f" code={event.code}" if event.code is not None else ""
+        message = f" message={event.message}" if event.message else ""
+        return f"[error]{code}{message}"
+
     if isinstance(event, HeartbeatEvent):
         return f"[heartbeat] {event.received_at.isoformat()}"
 
@@ -167,6 +173,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Print OK heartbeat events",
     )
+    parser.add_argument(
+        "--connect-timeout",
+        type=float,
+        help="Seconds to wait for the initial connection before exiting",
+    )
 
     return parser.parse_args()
 
@@ -196,9 +207,11 @@ async def prompt_loop(client: JablotronClient, pin: str | None) -> None:
             print(f"[error] {ex}")
 
 
-async def wait_until_connected(client: JablotronClient) -> None:
-    while not client.connected:
-        await asyncio.sleep(0.1)
+async def wait_until_connected(
+    client: JablotronClient,
+    timeout: float | None = None,
+) -> None:
+    await client.wait_until_connected(timeout=timeout)
 
 
 async def main() -> None:
@@ -215,7 +228,7 @@ async def main() -> None:
 
     print(f"Connecting to {args.host}:{args.port}...")
     await client.start()
-    await wait_until_connected(client)
+    await wait_until_connected(client, timeout=args.connect_timeout)
     print("Connected. Type help for commands.")
 
     try:

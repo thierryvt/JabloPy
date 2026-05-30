@@ -30,6 +30,7 @@ from .constants import (
     SECTION_STATES,
 )
 from .models import (
+    CommandErrorEvent,
     ConnectionEvent,
     FlagEvent,
     HeartbeatEvent,
@@ -70,6 +71,7 @@ __all__ = [
     "SECTION_READY",
     "SECTION_SERVICE",
     "SECTION_STATES",
+    "CommandErrorEvent",
     "ConnectionEvent",
     "FlagEvent",
     "HeartbeatEvent",

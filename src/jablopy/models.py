@@ -42,6 +42,12 @@ class ConnectionEvent(JablotronEvent):
 
 
 @dataclass(frozen=True)
+class CommandErrorEvent(JablotronEvent):
+    code: int | None = None
+    message: str | None = None
+
+
+@dataclass(frozen=True)
 class HeartbeatEvent(JablotronEvent):
     received_at: datetime
 
