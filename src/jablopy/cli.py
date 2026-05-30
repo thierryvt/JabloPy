@@ -22,7 +22,6 @@ from jablopy.models import (
 )
 from jablopy.protocol import JablotronProtocol
 
-
 DEFAULT_HOST = "192.168.1.140"
 DEFAULT_PORT = 8899
 CONTROL_COMMANDS = {"set", "setp", "unset"}

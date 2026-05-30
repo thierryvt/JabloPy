@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
-from typing import Iterable
+from collections.abc import Iterable
+from datetime import UTC, datetime
 
 from .constants import CONTROL_COMMANDS, QUERY_COMMANDS
 from .models import (
@@ -124,7 +124,7 @@ class JablotronProtocol:
             return None
 
         if line == "OK":
-            received_at = datetime.now(timezone.utc)
+            received_at = datetime.now(UTC)
             self._state.last_heartbeat = received_at
             return HeartbeatEvent(raw=line, received_at=received_at)
 

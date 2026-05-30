@@ -25,6 +25,12 @@ Run the interactive CLI:
 jablopy --host 192.168.1.140 --port 8899 --pin 1234
 ```
 
+Use `--connect-timeout` to stop waiting after a fixed number of seconds if the initial connection cannot be established:
+
+```powershell
+jablopy --host 192.168.1.140 --port 8899 --pin 1234 --connect-timeout 10
+```
+
 Alternative ways to run the CLI during development:
 
 ```powershell
@@ -47,6 +53,21 @@ from jablopy import JablotronClient, JablotronProtocol
 command = JablotronProtocol.build_arm_partial_command("1234", sections=[1])
 client = JablotronClient("192.168.1.140", 8899)
 ```
+
+The client reconnects automatically when the TCP connection drops. Commands sent while disconnected raise `RuntimeError` and are not queued.
+
+## Responses and errors
+
+Incoming lines are parsed into event objects and dispatched to listeners. This includes responses to commands and unsolicited pushed updates from the alarm system.
+
+| Response | Event |
+| --- | --- |
+| `OK` | `HeartbeatEvent` |
+| `STATE 1 ARMED_PART` | `SectionStateEvent` |
+| `EXIT 1 ON` | `FlagEvent` |
+| `PRFSTATE 28` | `PrfStateEvent` |
+| `ERROR` | `CommandErrorEvent` |
+| `ERROR: 3 NO_ACCESS` | `CommandErrorEvent` |
 
 ## Commands
 ### Supported commands

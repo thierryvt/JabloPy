@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Callable, Iterable
 from contextlib import suppress
-from typing import Callable, Iterable
 
 from .models import ConnectionEvent, JablotronEvent, JablotronState
 from .protocol import JablotronProtocol
-
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -82,7 +81,9 @@ class JablotronClient:
             self._task = None
 
     async def arm(self, pin: str, sections: Iterable[int] | int | None = (1,)) -> None:
-        await self.send_command(self._protocol.build_arm_command(pin, sections=sections))
+        await self.send_command(
+            self._protocol.build_arm_command(pin, sections=sections)
+        )
 
     async def arm_partial(
         self,
