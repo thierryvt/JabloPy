@@ -1,5 +1,5 @@
 # JabloPy - Simple interface for Jablotron alarm systems
-This service enables 2-way communication with a Jablotron alarm system without relying on cloud services or reverse-engineered APIs.
+This service enables 2-way communication with a Jablotron alarm system over tcp without relying on cloud services or reverse-engineered APIs.
 
 It exposes:
 - The alarm system itself (supports arming and disarming of sections)
