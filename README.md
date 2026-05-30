@@ -25,6 +25,20 @@ Run the interactive CLI:
 jablopy --host 192.168.1.140 --port 8899 --pin 1234
 ```
 
+Alternative ways to run the CLI during development:
+
+```powershell
+.\.venv\Scripts\python.exe -m jablopy.cli --host 192.168.1.140 --port 8899 --pin 1234
+.\.venv\Scripts\python.exe src\jablopy\cli.py --host 192.168.1.140 --port 8899 --pin 1234
+```
+
+For a PyCharm run configuration, use either:
+
+- Module name: `jablopy.cli`
+- Script path: `src\jablopy\cli.py`
+
+Set the working directory to the project root.
+
 ## Library usage
 
 ```python
