@@ -1,74 +1,25 @@
 from __future__ import annotations
 
-import asyncio
-import logging
-from contextlib import suppress
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Callable, Iterable
+from typing import Iterable
+
+from .models import (
+    FlagEvent,
+    HeartbeatEvent,
+    JablotronEvent,
+    JablotronState,
+    PrfStateEvent,
+    SectionStateEvent,
+    UnknownLineEvent,
+)
 
 
 CONTROL_COMMANDS = {"SET", "SETP", "UNSET"}
 QUERY_COMMANDS = {"VER", "HELP", "STATE", "FLAGS", "PRFSTATE"}
 
-_LOGGER = logging.getLogger(__name__)
-
-
-@dataclass
-class JablotronState:
-    sections: dict[int, str] = field(default_factory=dict)
-    flags: dict[str, set[int]] = field(default_factory=dict)
-    sensors: dict[int, bool] = field(default_factory=dict)
-    last_heartbeat: datetime | None = None
-    connected: bool = False
-
-    @property
-    def section_state(self) -> str | None:
-        return self.sections.get(1)
-
-    def is_flag_active(self, flag: str, section: int) -> bool:
-        return section in self.flags.get(flag, set())
-
-
-@dataclass(frozen=True)
-class JablotronEvent:
-    raw: str
-
-
-@dataclass(frozen=True)
-class HeartbeatEvent(JablotronEvent):
-    received_at: datetime
-
-
-@dataclass(frozen=True)
-class SectionStateEvent(JablotronEvent):
-    section: int
-    state: str
-    previous_state: str | None
-
-
-@dataclass(frozen=True)
-class FlagEvent(JablotronEvent):
-    flag: str
-    section: int
-    active: bool
-    active_sections: frozenset[int]
-
-
-@dataclass(frozen=True)
-class PrfStateEvent(JablotronEvent):
-    sensors: dict[int, bool]
-    active_devices: frozenset[int]
-    changed_devices: dict[int, bool]
-
-
-@dataclass(frozen=True)
-class UnknownLineEvent(JablotronEvent):
-    reason: str | None = None
-
 
 class JablotronProtocol:
-    def __init__(self):
+    def __init__(self) -> None:
         self._state = JablotronState()
 
     @property
@@ -289,9 +240,7 @@ class JablotronProtocol:
             raise ValueError("PRFSTATE value must contain whole bytes")
 
         sensors = {}
-
         raw = bytes.fromhex(hex_string)
-
         device_index = 0
 
         for byte in raw:
@@ -300,166 +249,3 @@ class JablotronProtocol:
                 device_index += 1
 
         return sensors
-
-
-class JablotronClient:
-    def __init__(
-        self,
-        host: str = "192.168.1.140",
-        port: int = 8899,
-        reconnect_delay: float = 5,
-        protocol: JablotronProtocol | None = None,
-    ):
-        self._host = host
-        self._port = port
-        self._reconnect_delay = reconnect_delay
-
-        self._reader: asyncio.StreamReader | None = None
-        self._writer: asyncio.StreamWriter | None = None
-
-        self._task: asyncio.Task | None = None
-        self._running = False
-
-        self._protocol = protocol or JablotronProtocol()
-
-        self._listeners: list[Callable[[JablotronEvent], None]] = []
-
-    @property
-    def state(self) -> JablotronState:
-        return self._protocol.state
-
-    @property
-    def connected(self) -> bool:
-        return self._protocol.state.connected
-
-    def add_listener(self, listener: Callable[[JablotronEvent], None]):
-        self._listeners.append(listener)
-
-    def remove_listener(self, listener: Callable[[JablotronEvent], None]):
-        self._listeners.remove(listener)
-
-    async def start(self):
-        if self._task and not self._task.done():
-            return
-
-        self._running = True
-        self._task = asyncio.create_task(self._reader_loop())
-
-    async def stop(self):
-        self._running = False
-
-        await self._close_connection()
-
-        if self._task:
-            self._task.cancel()
-            with suppress(asyncio.CancelledError):
-                await self._task
-
-            self._task = None
-
-    async def arm(self, pin: str, sections: Iterable[int] | int | None = (1,)):
-        await self.send_command(
-            self._protocol.build_arm_command(pin, sections=sections)
-        )
-
-    async def arm_partial(self, pin: str, sections: Iterable[int] | int | None = (1,)):
-        await self.send_command(
-            self._protocol.build_arm_partial_command(pin, sections=sections)
-        )
-
-    async def disarm(self, pin: str, sections: Iterable[int] | int | None = (1,)):
-        await self.send_command(
-            self._protocol.build_disarm_command(pin, sections=sections)
-        )
-
-    async def request_state(self, sections: Iterable[int] | int | None = None):
-        await self.send_command(
-            self._protocol.build_state_command(sections=sections)
-        )
-
-    async def request_flags(self, sections: Iterable[int] | int | None = None):
-        await self.send_command(
-            self._protocol.build_flags_command(sections=sections)
-        )
-
-    async def request_prfstate(self):
-        await self.send_command(self._protocol.build_prfstate_command())
-
-    async def send_command(self, command: str):
-        if not self._writer:
-            raise RuntimeError("Not connected")
-
-        self._writer.write((command + "\r\n").encode("ascii"))
-        await self._writer.drain()
-
-    async def _reader_loop(self):
-        try:
-            while self._running:
-                try:
-                    await self._connect()
-                    await self._initial_sync()
-                    await self._read_lines()
-                except Exception as ex:
-                    _LOGGER.warning("Jablotron disconnected: %s", ex)
-                finally:
-                    await self._close_connection()
-
-                if self._running:
-                    await asyncio.sleep(self._reconnect_delay)
-        finally:
-            await self._close_connection()
-
-    async def _connect(self):
-        self._reader, self._writer = await asyncio.open_connection(
-            self._host,
-            self._port,
-        )
-
-        self._protocol.state.connected = True
-
-    async def _close_connection(self):
-        writer = self._writer
-
-        self._reader = None
-        self._writer = None
-        self._protocol.state.connected = False
-
-        if writer:
-            writer.close()
-
-            with suppress(ConnectionError, OSError):
-                await writer.wait_closed()
-
-    async def _initial_sync(self):
-        await self.request_state()
-        await self.request_flags()
-        await self.request_prfstate()
-
-    async def _read_lines(self):
-        if not self._reader:
-            raise RuntimeError("Not connected")
-
-        while self._running:
-            line = await self._reader.readline()
-
-            if not line:
-                raise ConnectionError("Connection closed")
-
-            self._dispatch_line(line.decode("ascii", errors="ignore"))
-
-    def _dispatch_line(self, line: str) -> JablotronEvent | None:
-        _LOGGER.debug("Jablotron RX: %s", line.rstrip())
-
-        event = self._protocol.handle_line(line)
-
-        if event:
-            self._notify(event)
-
-        return event
-
-    def _notify(self, event: JablotronEvent):
-        for listener in list(self._listeners):
-            try:
-                listener(event)
-            except Exception:
-                _LOGGER.exception("Jablotron listener failed")

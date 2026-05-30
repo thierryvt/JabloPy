@@ -2,18 +2,23 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import sys
 from dataclasses import dataclass
+from pathlib import Path
 
-from Jablotron import (
+if __package__ in {None, ""}:
+    sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from jablopy.client import JablotronClient
+from jablopy.models import (
     FlagEvent,
     HeartbeatEvent,
-    JablotronClient,
     JablotronEvent,
-    JablotronProtocol,
     PrfStateEvent,
     SectionStateEvent,
     UnknownLineEvent,
 )
+from jablopy.protocol import JablotronProtocol
 
 
 DEFAULT_HOST = "192.168.1.140"
@@ -130,7 +135,7 @@ def format_event(event: JablotronEvent) -> str:
     return f"[event] {event}"
 
 
-def print_help():
+def print_help() -> None:
     print(
         "Commands:\n"
         "  state [sections...]       Query section state, e.g. state 1\n"
@@ -161,7 +166,7 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-async def prompt_loop(client: JablotronClient, pin: str | None):
+async def prompt_loop(client: JablotronClient, pin: str | None) -> None:
     loop = asyncio.get_running_loop()
 
     while True:
@@ -186,16 +191,16 @@ async def prompt_loop(client: JablotronClient, pin: str | None):
             print(f"[error] {ex}")
 
 
-async def wait_until_connected(client: JablotronClient):
+async def wait_until_connected(client: JablotronClient) -> None:
     while not client.connected:
         await asyncio.sleep(0.1)
 
 
-async def main():
+async def main() -> None:
     args = parse_args()
     client = JablotronClient(args.host, args.port)
 
-    def listener(event: JablotronEvent):
+    def listener(event: JablotronEvent) -> None:
         if isinstance(event, HeartbeatEvent) and not args.show_heartbeat:
             return
 
@@ -214,5 +219,9 @@ async def main():
         await client.stop()
 
 
-if __name__ == "__main__":
+def main_sync() -> None:
     asyncio.run(main())
+
+
+if __name__ == "__main__":
+    main_sync()

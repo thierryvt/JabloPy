@@ -12,6 +12,24 @@ It exposes:
 - A bridge device that can translate the RS-485 bus to tcp (For instance: A Waveshare RS485 to WiFi/Ethernet Module)
 
 ## Installing and running
-TODO
+Create a virtual environment and install the project in editable mode:
 
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
+```
 
+Run the interactive CLI:
+
+```powershell
+jablopy --host 192.168.1.140 --port 8899 --pin 1234
+```
+
+## Library usage
+
+```python
+from jablopy import JablotronClient, JablotronProtocol
+
+command = JablotronProtocol.build_arm_partial_command("1234", sections=[1])
+client = JablotronClient("192.168.1.140", 8899)
+```
