@@ -47,3 +47,21 @@ from jablopy import JablotronClient, JablotronProtocol
 command = JablotronProtocol.build_arm_partial_command("1234", sections=[1])
 client = JablotronClient("192.168.1.140", 8899)
 ```
+## example commands
+
+```
+Partially arm system with user 2 and pin 1234
+2*1234 SETP 1 
+
+user can be left out if there's only one
+1234 SETP 1
+
+Disarming the system
+1234 UNSET 1
+
+get flags
+FLAGS
+
+get device and sensor states:
+PRFSTATE
+```
