@@ -31,6 +31,12 @@ Use `--connect-timeout` to stop waiting after a fixed number of seconds if the i
 jablopy --host 192.168.1.140 --port 8899 --pin 1234 --connect-timeout 10
 ```
 
+The client treats the connection as stale when no incoming data is received for 30 seconds. This is based on the alarm system heartbeat and causes the client to disconnect and reconnect. Use `--read-timeout` to adjust this behavior:
+
+```powershell
+jablopy --host 192.168.1.140 --port 8899 --pin 1234 --read-timeout 45
+```
+
 Alternative ways to run the CLI during development:
 
 ```powershell
@@ -51,10 +57,10 @@ Set the working directory to the project root.
 from jablopy import JablotronClient, JablotronProtocol
 
 command = JablotronProtocol.build_arm_partial_command("1234", sections=[1])
-client = JablotronClient("192.168.1.140", 8899)
+client = JablotronClient("192.168.1.140", 8899, read_timeout=30)
 ```
 
-The client reconnects automatically when the TCP connection drops. Commands sent while disconnected raise `RuntimeError` and are not queued.
+The client reconnects automatically when the TCP connection drops or when no incoming data is received within `read_timeout` seconds. Commands sent while disconnected raise `RuntimeError` and are not queued.
 
 ## Responses and errors
 

@@ -177,6 +177,12 @@ def parse_args() -> argparse.Namespace:
         type=float,
         help="Seconds to wait for the initial connection before exiting",
     )
+    parser.add_argument(
+        "--read-timeout",
+        type=float,
+        default=30,
+        help="Seconds without incoming data before reconnecting; use 0 to disable",
+    )
 
     return parser.parse_args()
 
@@ -215,7 +221,8 @@ async def wait_until_connected(
 
 async def main() -> None:
     args = parse_args()
-    client = JablotronClient(args.host, args.port)
+    read_timeout = args.read_timeout if args.read_timeout > 0 else None
+    client = JablotronClient(args.host, args.port, read_timeout=read_timeout)
 
     def listener(event: JablotronEvent) -> None:
         if isinstance(event, HeartbeatEvent) and not args.show_heartbeat:

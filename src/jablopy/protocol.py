@@ -123,8 +123,10 @@ class JablotronProtocol:
         if not line:
             return None
 
+        received_at = datetime.now(UTC)
+        self._state.last_received = received_at
+
         if line == "OK":
-            received_at = datetime.now(UTC)
             self._state.last_heartbeat = received_at
             return HeartbeatEvent(raw=line, received_at=received_at)
 

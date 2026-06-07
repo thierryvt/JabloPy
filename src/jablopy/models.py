@@ -9,6 +9,7 @@ class JablotronState:
     sections: dict[int, str] = field(default_factory=dict)
     flags: dict[str, set[int]] = field(default_factory=dict)
     sensors: dict[int, bool] = field(default_factory=dict)
+    last_received: datetime | None = None
     last_heartbeat: datetime | None = None
     connected: bool = False
 

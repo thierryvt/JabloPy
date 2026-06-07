@@ -17,11 +17,13 @@ class JablotronClient:
         host: str = "192.168.1.140",
         port: int = 8899,
         reconnect_delay: float = 5,
+        read_timeout: float | None = 30,
         protocol: JablotronProtocol | None = None,
     ) -> None:
         self._host = host
         self._port = port
         self._reconnect_delay = reconnect_delay
+        self._read_timeout = read_timeout
 
         self._reader: asyncio.StreamReader | None = None
         self._writer: asyncio.StreamWriter | None = None
@@ -167,12 +169,29 @@ class JablotronClient:
             raise RuntimeError("Not connected")
 
         while self._running:
-            line = await self._reader.readline()
+            line = await self._read_line()
 
             if not line:
                 raise ConnectionError("Connection closed")
 
             self._dispatch_line(line.decode("ascii", errors="ignore"))
+
+    async def _read_line(self) -> bytes:
+        if not self._reader:
+            raise RuntimeError("Not connected")
+
+        if self._read_timeout is None:
+            return await self._reader.readline()
+
+        try:
+            return await asyncio.wait_for(
+                self._reader.readline(),
+                timeout=self._read_timeout,
+            )
+        except TimeoutError as ex:
+            raise ConnectionError(
+                f"No data received within {self._read_timeout:g} seconds"
+            ) from ex
 
     def _dispatch_line(self, line: str) -> JablotronEvent | None:
         _LOGGER.debug("Jablotron RX: %s", line.rstrip())
